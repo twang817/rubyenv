@@ -140,7 +140,7 @@ def _copytree(src, dst):
                 os.remove(d)
                 shutil.copy(s, d)
 
-@subcommand("install")
+@subcommand
 def install(ns):
     if ns.prebuilt:
         try:
