@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import argparse
 import git
 import logging
@@ -6,8 +8,12 @@ import os
 import shutil
 import sys
 import tarfile
-import urllib2
-import urlparse
+import six
+
+from past.builtins import basestring
+from six.moves.urllib.parse import urlparse, urlencode
+from six.moves.urllib.request import urlopen
+from six.moves.urllib.error import HTTPError
 
 #{{{ logging config
 logging.config.dictConfig({
@@ -54,7 +60,11 @@ class subcommand(object):
     @classmethod
     def dispatch(cls, *args, **kwargs):
         ns = cls._parser.parse_args(*args, **kwargs)
-        return ns.function(ns)
+        if hasattr(ns, "function"):
+            return ns.function(ns)
+        else:
+            print("usage: rubyenv -h {install, list}")
+
     @classmethod
     def set_defaults(cls, *args, **kwargs):
         cls._parser.set_defaults(*args, **kwargs)
@@ -87,8 +97,8 @@ def _get_prebuilt_list():
         distro, vers, _ = platform.linux_distribution()
         distro = distro.lower()
 
-    for url in urllib2.urlopen('https://raw.githubusercontent.com/rvm/rvm/master/config/remote').read().splitlines():
-        url = urlparse.urlparse(url)
+    for url in urlopen('https://raw.githubusercontent.com/rvm/rvm/master/config/remote').read().splitlines():
+        url = urlparse(url)
         path = url.path.split('/')
         if distro in path and vers in path and machine in path:
             ver = path[-1]
@@ -134,12 +144,12 @@ def _copytree(src, dst):
 def install(ns):
     if ns.prebuilt:
         try:
-            for ver, url in sorted(_get_prebuilt_list(), key=lambda (v, u): _get_numerical_version(v)):
+            for ver, url in sorted(_get_prebuilt_list(), key=lambda v_u: _get_numerical_version(v_u[0])):
                 if ver == ns.version:
                     break
             else:
                 if ns.version != 'latest':
-                    print 'could not find version', ns.version
+                    print('could not find version', ns.version)
                     sys.exit(1)
 
             tarname = os.path.basename(url.path)
@@ -149,7 +159,7 @@ def install(ns):
             extractdir = os.path.dirname(tarpath)
             extractpath = os.path.join(extractdir, base)
 
-            resp = urllib2.urlopen(urlparse.urlunparse(url))
+            resp = urlopen(urlparse.urlunparse(url))
             content = resp.read()
             with open(tarpath, 'wb') as f:
                 f.write(content)
@@ -167,7 +177,7 @@ def install(ns):
             os.mkdir(cachedir)
             return
         except Exception as e:
-            print 'Could not install prebuilt binary', e
+            print('Could not install prebuilt binary', e)
             import traceback
             traceback.print_exc()
             sys.exit(1)
@@ -181,10 +191,10 @@ def _list(ns):
     if ns.prebuilt:
         try:
             for ver, url in _get_prebuilt_list():
-                print ver
+                print(ver)
             return
         except Exception as e:
-            print 'Could not load prebuilt list', e
+            print('Could not load prebuilt list', e)
             sys.exit(1)
     ruby_build = os.path.join(ensure_ruby_build(), 'bin', 'ruby-build')
     os.system('%s --definitions' % ruby_build)
