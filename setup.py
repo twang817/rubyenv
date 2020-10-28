@@ -10,6 +10,7 @@ setup(
 
     description='manage ruby in your virtualenv',
     long_description=io.open('README.md', encoding='utf-8').read(),
+    long_description_content_type='text/markdown',
     author='Tommy Wang',
     author_email='twang@august8.net',
     url='http://github.com/twang817/rubyenv',
