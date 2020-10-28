@@ -16,7 +16,7 @@ setup(
     download_url='https://github.com/twang817/rubyenv/tarball/{version}'.format(version=version),
 
     packages=find_packages(),
-    install_requires=['gitpython'],
+    install_requires=['gitpython', 'six', 'future'],
     include_package_data=True,
 
     entry_points={
