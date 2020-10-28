@@ -11,7 +11,7 @@ import tarfile
 import six
 
 from past.builtins import basestring
-from six.moves.urllib.parse import urlparse, urlencode
+from six.moves.urllib.parse import urlparse, urlunparse, urlencode
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import HTTPError
 
@@ -98,6 +98,8 @@ def _get_prebuilt_list():
         distro = distro.lower()
 
     for url in urlopen('https://raw.githubusercontent.com/rvm/rvm/master/config/remote').read().splitlines():
+        if (isinstance(url, bytes)):
+            url = url.decode()
         url = urlparse(url)
         path = url.path.split('/')
         if distro in path and vers in path and machine in path:
@@ -159,7 +161,7 @@ def install(ns):
             extractdir = os.path.dirname(tarpath)
             extractpath = os.path.join(extractdir, base)
 
-            resp = urlopen(urlparse.urlunparse(url))
+            resp = urlopen(urlunparse(url))
             content = resp.read()
             with open(tarpath, 'wb') as f:
                 f.write(content)
@@ -182,7 +184,10 @@ def install(ns):
             traceback.print_exc()
             sys.exit(1)
     ruby_build = os.path.join(ensure_ruby_build(), 'bin', 'ruby-build')
-    os.system('%s %s %s' % (ruby_build, ns.version, get_virtualenv_dir()))
+    cmd = '%s %s %s %s' %(ruby_build, ns.version, get_virtualenv_dir(), '-v')
+    print("Calling: %s" % cmd)
+    os.system(cmd)
+
 install.add_argument('version', type=str, nargs='?', default='latest')
 install.add_argument('--prebuilt', action='store_true')
 
